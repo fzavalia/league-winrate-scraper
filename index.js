@@ -7,14 +7,20 @@ const datefns = require('date-fns')
 
 const baseUrl = 'https://www.leagueofgraphs.com/es/rankings/summoners/'
 
+const logCurrentScrapedChamp = (champ, res) => {
+    console.log('Scraping ' + champ)
+    return res
+}
+
 const getWinPercentage = res =>
     Promise.resolve(cheerio.load(res))
         .then($ => $('.data_table > tbody').children().map((_, e) => $(e).children('td:nth-child(4)').text()).toArray())
 
-const makeRequest = champ =>
+const scrapChamp = champ =>
     axios.get(baseUrl + champ)
         .then(res => res.data)
-        .then(getWinPercentage)
+        .then(res => logCurrentScrapedChamp(champ, res))
+        .then(res => getWinPercentage(res))
         .then(res => res.map(x => x.toString()))
         .then(res => res.map(x => x.match(/\d.?\.\d/)))
         .then(res => res.filter(x => x != null))
@@ -23,19 +29,28 @@ const makeRequest = champ =>
         .then(res => res.reduce((acc, next) => acc + next, 0) / res.length)
         .then(res => ({ champ, value: res }))
 
-const requests = champs.map(makeRequest)
+const requests = champs.map(scrapChamp)
 
-const writeResultToFile = res => {
-    const writePath = path.resolve(__dirname, 'results')
-    if (!fs.existsSync(writePath)) {
-        fs.mkdirSync(writePath)
+const resultsFolderPath = path.resolve(__dirname, 'results')
+
+const createResultsFolder = () => {
+    if (!fs.existsSync(resultsFolderPath)) {
+        fs.mkdirSync(resultsFolderPath)
     }
-    fs.writeFileSync(
-        path.resolve(writePath, datefns.format(new Date(), 'YYYY-MM-DD') + '.json'),
-        JSON.stringify(res, null, 2)
-    )
 }
 
+const storeResults = res =>
+    fs.writeFileSync(
+        path.resolve(resultsFolderPath, datefns.format(new Date(), 'YYYY-MM-DD') + '.json'),
+        JSON.stringify(res, null, 2)
+    )
+
+console.log('Scraping... \n')
+
 Promise.all(requests)
-    .then(writeResultToFile)
+    .then(res => {
+        createResultsFolder()
+        storeResults(res)
+    })
+    .then(() => console.log('\nScraping complete!'))
     .catch(console.error)
