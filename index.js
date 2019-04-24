@@ -24,15 +24,17 @@ const makeRequest = champ =>
 
 const requests = champs.map(makeRequest)
 
+const writeResultToFile = res => {
+    const writePath = path.resolve(__dirname, 'data')
+    if (!fs.existsSync(writePath)) {
+        fs.mkdirSync(writePath)
+    }
+    fs.writeFileSync(
+        path.resolve(writePath, new Date().toDateString()),
+        JSON.stringify(res, null, 2)
+    )
+}
+
 Promise.all(requests)
-    .then(res => {
-        const writePath = path.resolve(__dirname, 'data')
-        if (!fs.existsSync(writePath)) {
-            fs.mkdirSync(writePath)
-        }
-        fs.writeFileSync(
-            path.resolve(writePath, new Date().toDateString()),
-            JSON.stringify(res, null, 2)
-        )
-    })
+    .then(writeResultToFile)
     .catch(console.error)
