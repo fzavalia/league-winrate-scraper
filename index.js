@@ -27,7 +27,7 @@ const scrapChamp = champ =>
         .then(res => res.map(x => x[0]))
         .then(res => res.map(parseFloat))
         .then(res => res.reduce((acc, next) => acc + next, 0) / res.length)
-        .then(res => ({ champ, value: res }))
+        .then(res => ([champ, res.toFixed(2)]))
 
 const requests = champs.map(scrapChamp)
 
@@ -41,8 +41,8 @@ const createResultsFolder = () => {
 
 const storeResults = res =>
     fs.writeFileSync(
-        path.resolve(resultsFolderPath, datefns.format(new Date(), 'YYYY-MM-DD') + '.json'),
-        JSON.stringify(res, null, 2)
+        path.resolve(resultsFolderPath, datefns.format(new Date(), 'YYYY-MM-DD') + '.csv'),
+        res.map(pair => pair.join(',')).join('\n')
     )
 
 console.log('Scraping... \n')
