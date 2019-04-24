@@ -1,13 +1,14 @@
 const axios = require('axios').default
 const cheerio = require('cheerio')
-const champs = require('./champs.json')
+const fs = require('fs')
+const path = require('path')
+const champs = require('./champs.json').slice(0, 5)
 
 const baseUrl = 'https://www.leagueofgraphs.com/es/rankings/summoners/'
 
-const getWinPercentage = res => {
-    const $ = cheerio.load(res)
-    return $('.data_table > tbody').children().map((_, e) => $(e).children('td:nth-child(4)').text()).toArray()
-}
+const getWinPercentage = res =>
+    Promise.resolve(cheerio.load(res))
+        .then($ => $('.data_table > tbody').children().map((_, e) => $(e).children('td:nth-child(4)').text()).toArray())
 
 const makeRequest = champ =>
     axios.get(baseUrl + champ)
@@ -23,4 +24,15 @@ const makeRequest = champ =>
 
 const requests = champs.map(makeRequest)
 
-Promise.all(requests).then(console.log)
+Promise.all(requests)
+    .then(res => {
+        const writePath = path.resolve(__dirname, 'data')
+        if (!fs.existsSync(writePath)) {
+            fs.mkdirSync(writePath)
+        }
+        fs.writeFileSync(
+            path.resolve(writePath, new Date().toDateString()),
+            JSON.stringify(res, null, 2)
+        )
+    })
+    .catch(console.error)
