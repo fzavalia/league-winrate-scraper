@@ -1,9 +1,9 @@
 const axios = require('axios').default
 const cheerio = require('cheerio')
+const datefns = require('date-fns')
 const fs = require('fs')
 const path = require('path')
 const champs = require('./champs.json')
-const datefns = require('date-fns')
 
 const baseUrl = 'https://www.leagueofgraphs.com/es/rankings/summoners/'
 
